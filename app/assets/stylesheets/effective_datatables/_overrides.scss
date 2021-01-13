@@ -1,0 +1,196 @@
+// Use asset-data-url to prevent 3 additional GET requests for icons
+table.dataTable thead .sorting {
+  background-image: asset-data-url('dataTables/sort_both.png');
+  background-position: right 0px bottom 14px;
+}
+
+table.dataTable thead .sorting_asc {
+  background-image: asset-data-url('dataTables/sort_asc.png');
+  background-position: right 0px bottom 14px;
+}
+
+table.dataTable thead .sorting_desc {
+  background-image: asset-data-url('dataTables/sort_desc.png');
+  background-position: right 0px bottom 14px;
+}
+
+// Override bootstrap default glyphicons
+table.dataTable thead .sorting:after { content: ''; }
+table.dataTable thead .sorting_asc:after { content: ''; }
+table.dataTable thead .sorting_desc:after { content: ''; }
+
+// Table header
+table.dataTable thead > tr > th.sorting_asc,
+table.dataTable thead > tr > th.sorting_desc,
+table.dataTable thead > tr > th.sorting {
+  background-repeat: no-repeat;
+  padding-right: 18px;
+}
+
+// Search bar
+table.dataTable thead {
+  tr th {
+    text-align: left;
+    vertical-align: top;
+    border-bottom: none;
+    white-space: nowrap;
+    padding: 6px;
+  }
+
+  .form-control, .form-group {
+    width: 100%;
+    font-weight: normal;
+    margin: 0px;
+  }
+
+  .datatable_search__bulk_actions { margin-left: 5px; }
+}
+
+// Simple styles
+table.dataTable.simple {
+  thead {
+    .sorting { background-image: none; cursor: default; }
+    .sorting_asc { background-image: none; cursor: default; }
+    .sorting_desc { background-image: none; cursor: default; }
+
+    .form-group { display: none; }
+    .col-bulk_actions { display: none; }
+  }
+}
+
+// Processing popup
+div.dataTables_wrapper div.dataTables_processing {
+  top: -10px;
+  border: none;
+  box-shadow: none;
+  margin-left: -35%;
+  margin-bottom: 0;
+  width: 70%;
+}
+
+// Datatables entries
+@media screen and (max-width: 767px) {
+  div.dataTables_wrapper div.dataTables_entries { text-align: center; }
+}
+
+.dataTables_wrapper .dataTables_entries {
+  color: #909090;
+  font-size: 12px;
+
+  // Showing 1 to 2 of 2 entries (filtered from 10 total entries)
+  div.dataTables_info {
+    display: inline-block;
+    padding: 5px 0px 6px 6px;
+  }
+
+  // with 25 per page
+  div.dataTables_length {
+    display: inline-block;
+
+    // Apply custom style to the inline x per page select
+    span.select2-container {
+      margin: 0px -3px 3px -3px;
+      max-width: 45px;
+
+      .select2-selection { border: none; }
+      .select2-selection__rendered { padding: 0px; color: #909090; }
+    }
+
+    span.select2-container.select2-container--open { max-width: 60px; }
+    span.select2-container.select2-container--focus { border: none; box-shadow: none; }
+    span.select2-container--focus > .selection > .select2-selection { border: none !important; }
+  }
+}
+
+// Buttons
+div.dt-buttons {
+  float: right;
+  display: inherit;
+  width: auto;
+}
+
+.dt-buttons {
+  a, button {
+    border: none;
+    color: #337ab7;
+    border-color: transparent;
+    background: #fff;
+    font-size: 12px;
+    padding: 6px;
+    margin-right: 6px;
+    float: none;
+
+    &:hover,
+    &:focus {
+      border: none;
+      border-color: transparent;
+      background: #eee !important;
+    }
+
+    &:last-child { margin-right: 0px; }
+
+    &.active {
+      color: #fff;
+      background: #03428d !important;
+    }
+
+    .caret {
+      margin-bottom: 4px;
+    }
+  }
+}
+
+// Show / hide columns button
+ul.dt-button-collection {
+  width: 400px;
+
+  li {
+    width: 198px;
+    overflow: hidden;
+  }
+
+  li:nth-child(odd) {
+    float: left;
+  }
+
+  li:nth-child(even) {
+    float: right;
+  }
+
+  .buttons-colvisGroup {
+    clear: left;
+    border-top: 1px solid grey;
+  }
+
+  .buttons-colvisRestore {
+    border-top: 1px solid grey;
+  }
+}
+
+// Collapsed Responsive View
+table.dataTable > tbody > tr.child {
+  span.dtr-title { min-width: 175px; margin-bottom: 4px; }
+  span.dtr-data { white-space: nowrap; }
+  .col-resource_item { margin-bottom: 4px; }
+}
+
+// Column specific adjustments
+table.dataTable {
+  td.col-price { text-align: right; }
+  td.col-decimal { text-align: right; }
+  td.col-right { text-align: right; }
+
+  td.col-actions {
+    white-space: nowrap;
+  }
+
+  td.col-bulk_actions {
+    input[type='checkbox'] { margin-left: 1px; margin-right: 1px; }
+  }
+
+  td.col-resource_item { word-break: keep-all; }
+
+  td {
+    p { margin-bottom: 0px; }
+  }
+}

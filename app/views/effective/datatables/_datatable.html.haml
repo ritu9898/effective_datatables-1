@@ -1,0 +1,30 @@
+%table{effective_datatable_params}
+  %thead
+    - if datatable.columns.any? { |_, opts| opts[:th].present? } == false
+      %tr
+        - datatable.columns.each do |name, opts|
+          %th= opts[:label] || name
+    - else
+      - max_depth = datatable.columns.map { |_, opts| opts[:th].try(:[], :depth) || 0 }.max
+      - [*0..max_depth].each do |depth|
+        %tr
+          - columns = datatable.columns.select { |_, opts| (opts[:th].try(:[], :depth) || 0) == depth }
+          - columns.each do |name, opts|
+            %th{(opts[:th] || {}).merge(title: (opts[:label] || name))}
+              = opts[:label] || name
+            - (opts[:th_append] || []).each do |faux_col|
+              %th{(faux_col[:th] || {}).merge(title: faux_col[:label])}
+                = faux_col[:label]
+
+  %tbody
+    - datatable.to_json[:data].each do |row|
+      %tr
+        - row.each do |col|
+          %td= col.to_s.html_safe
+
+  - if datatable.to_json[:aggregates].present?
+    %tfoot
+      - datatable.to_json[:aggregates].each do |row|
+        %tr
+          - row.each do |col|
+            %td= col.to_s.html_safe
