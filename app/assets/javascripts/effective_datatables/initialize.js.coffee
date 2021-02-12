@@ -40,13 +40,15 @@ initializeDataTables = ->
             table_headers = $('table').children('thead').children('tr').children('th').children('.search-label')
             header_text = []
             for i in [0..table_headers.length-1]
-              header_text.push(table_headers[i].innerHTML)
+              header_text.push(table_headers[i].innerHTML.trim())
 
-            split_csv = csv.split("\n");
+            data = csv.replaceAll(/\n"/g, '<br>')
+            split_csv = data.split('<br>');
             row_array = []
+            final_row = []
             $.each split_csv, (tag) ->
               # TAG is a index of row data
-              row_array.push(split_csv[tag].split(/","/))
+              row_array.push(split_csv[tag].split('","'))
 
             header_data = row_array[0]
             hidden_col_ids = []
@@ -55,7 +57,7 @@ initializeDataTables = ->
             header_data[header_data.length-1] = header_data[header_data.length-1].toString().replace('"', '') # getting first element like Text"
 
             for i in [0..header_data.length-1]
-              if !(header_data[i] in header_text)
+              if (header_text.indexOf(header_data[i].trim()) == -1)
                 hidden_col_ids.push(i)
             
             hidden_col_ids = hidden_col_ids.reverse()
@@ -63,7 +65,20 @@ initializeDataTables = ->
               $.each hidden_col_ids, (id) ->
                 row_array[tag].splice(hidden_col_ids[id],1)
 
-            csv = row_array.join("\n");
+            for tag in [0..row_array.length-1]
+              row_zero = row_array[tag][0]
+              row_last = row_array[tag][row_array[tag].length-1]
+              row_array[tag][0] = row_zero.toString().replace('"', '')
+              row_array[tag][row_array[tag].length-1] = row_last.toString().replace('"', '')
+
+              final_str =  '"' + row_array[tag].join(/","/)
+              final_str = final_str + '"' if final_str[final_str.length-1] != '"'
+              final_row.push(final_str)
+            
+            for i in [0..final_row.length-1]
+              final_row[i] = final_row[i].replaceAll("/", '')
+            
+            csv = final_row.join("\n");
             return csv;
         },
         {
