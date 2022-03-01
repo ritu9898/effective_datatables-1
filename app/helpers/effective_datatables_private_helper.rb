@@ -11,7 +11,7 @@ module EffectiveDatatablesPrivateHelper
         name: name,
         title: content_tag(:span, (opts[:label] == false ? '' : opts[:label]), class: 'search-label'),
         className: opts[:col_class],
-        searchHtml: (datatable_search_html(form, name, datatable.state[:search][name], opts) unless datatable.simple?),
+        searchHtml: (datatable_search_tag(datatable, name, opts) unless datatable.simple?),
         responsivePriority: opts[:responsive],
         search: datatable.state[:search][name],
         sortable: (opts[:sort] && !datatable.simple?),
@@ -30,76 +30,68 @@ module EffectiveDatatablesPrivateHelper
     render(partial: '/effective/datatables/reset', locals: { datatable: datatable }).gsub("'", '"').html_safe
   end
 
-  def datatable_search_html(form, name, value, opts)
-    include_blank = opts[:search].key?(:include_blank) ? opts[:search][:include_blank] : opts[:label]
-    pattern = opts[:search][:pattern]
-    placeholder = opts[:search][:placeholder] || ''
-    title = opts[:search][:title] || opts[:label]
-    wrapper_html = { class: 'datatable_search' }
+  def datatable_new_resource_button(datatable, name, column)
+    return unless column[:inline] && (column[:actions][:new] != false)
 
-    input_html = {
-      name: nil,
-      value: value,
-      title: title,
-      pattern: pattern,
-      data: {'column-name' => name, 'column-index' => opts[:index]}
-    }.delete_if { |k, v| v.blank? && k != :name }
+    action = { action: :new, class: ['btn', column[:btn_class].presence].compact.join(' '), 'data-remote': true }
 
-    case opts[:search][:as]
-    when :string, :text, :number
-      form.input name, label: false, required: false, value: value,
-        as: :string,
-        placeholder: placeholder,
-        wrapper_html: wrapper_html,
-        input_html: input_html
-    when :effective_obfuscation
-      input_html[:pattern] ||= '[0-9]{3}-?[0-9]{4}-?[0-9]{3}'
-      input_html[:title] = 'Expected format: XXX-XXXX-XXX'
+    if column[:actions][:new].kind_of?(Hash) # This might be active_record_array_collection?
+      actions = action.merge(column[:actions][:new])
 
-      form.input name, label: false, required: false, value: value,
-        as: :string,
-        placeholder: placeholder,
-        wrapper_html: wrapper_html,
-        input_html: input_html
-    when :date, :datetime
-      form.input name, label: false, required: false, value: value,
-        as: (ActionView::Helpers::FormBuilder.instance_methods.include?(:effective_date_picker) ? :effective_date_picker : :string),
-        placeholder: placeholder,
-        wrapper_html: wrapper_html,
-        input_group: false,
-        input_html: input_html,
-        date_linked: false,
-        input_js: { useStrict: true, keepInvalid: true }
-        # Keep invalid format like "2015-11" so we can still search by year, month or day
-    when :time
-      form.input name, label: false, required: false, value: value,
-        as: (ActionView::Helpers::FormBuilder.instance_methods.include?(:effective_time_picker) ? :effective_time_picker : :string),
-        placeholder: placeholder,
-        wrapper_html: wrapper_html,
-        input_group: false,
-        input_html: input_html,
-        date_linked: false,
-        input_js: { useStrict: false, keepInvalid: true }
-    when :select, :boolean
-      form.input name, label: false, required: false, value: value,
-        as: (ActionView::Helpers::FormBuilder.instance_methods.include?(:effective_select) ? :effective_select : :select),
-        collection: opts[:search][:collection],
-        selected: opts[:search][:value],
-        multiple: opts[:search][:multiple],
-        grouped: opts[:search][:grouped],
-        polymorphic: opts[:search][:polymorphic],
-        template: opts[:search][:template],
-        include_blank: include_blank,
-        wrapper_html: wrapper_html,
-        input_html: input_html,
-        input_js: { placeholder: placeholder }
-    when :bulk_actions
-      input_html[:data]['role'] = 'bulk-actions-all'
-
-      form.input name, label: false, required: false, value: nil,
-        as: :boolean,
-        input_html: input_html
+      effective_resource = (datatable.effective_resource || datatable.fallback_effective_resource)
+      klass = (column[:actions][:new][:klass] || effective_resource&.klass || datatable.collection_class)
+    elsif Array(datatable.effective_resource&.actions).include?(:new)
+      effective_resource = datatable.effective_resource
+      klass = effective_resource.klass
+    else
+      return
     end
+
+    # Will only work if permitted
+    render_resource_actions(klass, actions: { t('effective_datatables.new') => action }, effective_resource: effective_resource)
   end
 
+  def datatable_search_tag(name, value, opts)
+
+    return datatable_new_resource_button(datatable, name, opts) if name == :_actions
+
+    return if opts[:search] == false
+
+    # Build the search
+    @_effective_datatables_form_builder || effective_form_with(scope: 'datatable_search', url: '#') { |f| @_effective_datatables_form_builder = f }
+    form = @_effective_datatables_form_builder
+
+    collection = opts[:search].delete(:collection)
+    value = datatable.state[:search][name]
+
+    options = opts[:search].merge(
+      name: nil,
+      feedback: false,
+      label: false,
+      value: value,
+      data: { 'column-name': name, 'column-index': opts[:index] }
+    )
+
+    options.delete(:fuzzy)
+
+    case options.delete(:as)
+    when :string, :text, :number
+      form.text_field name, options
+    when :date, :datetime
+      form.date_field name, options.reverse_merge(
+        date_linked: false, prepend: false, input_js: { useStrict: true, keepInvalid: true }
+      )
+    when :time
+      form.time_field name, options.reverse_merge(
+        date_linked: false, prepend: false, input_js: { useStrict: false, keepInvalid: true }
+      )
+    when :select, :boolean
+      options[:input_js] = (options[:input_js] || {}).reverse_merge(placeholder: '')
+
+      form.select name, collection, options
+    when :bulk_actions
+      options[:data]['role'] = 'bulk-actions'
+      form.check_box name, options.merge(label: '&nbsp;')
+    end
+  end
 end
